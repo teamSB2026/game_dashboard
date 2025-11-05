@@ -65,7 +65,7 @@ st_autorefresh(interval=3 * 1000, key="refresh_demo")
 assets_dir = Path(__file__).resolve().parent / "assets"
 header_path = assets_dir / "header.png"
 if header_path.exists():
-    st.image(str(header_path), use_container_width=True)
+    st.image(str(header_path), width="stretch")
 
 # タイトル
 st.markdown("<h1 class='header-title'>🥤 第１問 利きスポドリ 💧</h1>", unsafe_allow_html=True)

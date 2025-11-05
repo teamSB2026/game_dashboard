@@ -8,7 +8,6 @@
 ## 🚀 セットアップ手順（`uv` 使用版）
 
 ### 1️⃣ `uv` のインストール（初回のみ）
-
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -20,37 +19,32 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 ---
 
-### 2️⃣ 仮想環境の作成と依存関係インストール
+### 2️⃣ プロジェクトの初期化（初回のみ）
 
+プロジェクトディレクトリで以下を実行：
 ```bash
-uv venv
-uv pip install -r requirements.txt
+uv init
 ```
 
-> ※ `requirements.txt` がない場合は以下を直接実行してください：
-
-```bash
-uv pip install streamlit pandas numpy streamlit-autorefresh altair
-```
+これで `pyproject.toml` が自動生成されます。
 
 ---
 
-### 3️⃣ 仮想環境の有効化
+### 3️⃣ 依存関係のインストール
 
-**Mac / Linux:**
+**方法A: requirements.txt がある場合**
 ```bash
-source .venv/bin/activate
+uv pip install -r requirements.txt
 ```
 
-**Windows:**
+**方法B: requirements.txt がない場合**
 ```bash
-.venv\Scripts\activate
+uv add streamlit pandas numpy streamlit-autorefresh altair
 ```
 
 ---
 
 ## 🧠 実行方法
-
 ```bash
 uv run streamlit run app_tea.py
 ```
@@ -61,7 +55,6 @@ uv run streamlit run app_tea.py
 ---
 
 ## 📁 ディレクトリ構成
-
 ```bash
 project-root/
 ├── app_sport.py
@@ -69,6 +62,8 @@ project-root/
 ├── assets/
 │   └── header.png      # ヘッダー画像（任意）
 ├── requirements.txt    # 依存関係（任意）
+├── pyproject.toml      # uv管理ファイル（uv initで生成）
+├── .python-version     # Pythonバージョン（uv initで生成）
 └── README.md           # このファイル
 ```
 
@@ -97,6 +92,36 @@ project-root/
 - **Pandas / Numpy**
 - **Altair**
 - **streamlit-autorefresh**
+
+---
+
+## 🛠️ トラブルシューティング
+
+### `No pyproject.toml found` エラーが出た場合
+
+プロジェクトディレクトリで以下を実行してください：
+```bash
+uv init
+```
+
+その後、依存関係をインストール：
+```bash
+uv add streamlit pandas numpy streamlit-autorefresh altair
+```
+
+### 他の環境で実行する場合
+
+プロジェクトをクローン/ダウンロード後：
+```bash
+cd project-root
+uv sync
+uv run streamlit run app_tea.py
+```
+
+### Python バージョンを指定したい場合
+```bash
+uv init --python 3.10
+```
 
 ---
 
