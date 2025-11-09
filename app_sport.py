@@ -59,7 +59,7 @@ body {{ background: #f0faff; }}
 """, unsafe_allow_html=True)
 
 # 🔄 自動リフレッシュ（デモ用）
-st_autorefresh(interval=3 * 1000, key="refresh_demo")
+#st_autorefresh(interval=3 * 1000, key="refresh_demo")
 
 # ヘッダー画像（任意）
 assets_dir = Path(__file__).resolve().parent / "assets"
@@ -69,29 +69,49 @@ if header_path.exists():
 
 # タイトル
 st.markdown("<h1 class='header-title'>🥤 第１問 利きスポドリ 💧</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>💪 どのスポドリが一番人気かな？ 💪</p>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>💪 さあみんなどれがどれだかわかったかな？ 💪</p>", unsafe_allow_html=True)
 
 # -----------------------
-# サンプルデータ（4択重複なし）
+# CSVデータ読み込み
 # -----------------------
-drink_choices = ['ポカリスエット', 'アクエリアス', 'グリーンダカラ', 'ビタミンウォーター']
+drink_choices = ['ポカリ', 'アクエリ', 'だから', '??']
 drink_colors = {
-    'ポカリスエット': "#4fa6ff",
-    'アクエリアス': "#0077cc",
-    'グリーンダカラ': "#76c893",
-    'ビタミンウォーター': "#f6d743"
+    'ポカリ': "#4fa6ff",
+    'アクエリ': "#0077cc",
+    'だから': "#76c893",
+    '??': "#f6d743"
 }
 bg_map = {"赤": "#ff4b4b", "緑": "#4caf50", "青": "#1e90ff", "紫": "#9c27b0"}
 
-assignments = [np.random.choice(drink_choices, size=4, replace=False) for _ in range(32)]
-data = {
-    "回答者": [f'{i}班' for i in range(1, 33)],
-    "赤": [a[0] for a in assignments],
-    "緑": [a[1] for a in assignments],
-    "青": [a[2] for a in assignments],
-    "紫": [a[3] for a in assignments],
-}
-df = pd.DataFrame(data)
+# Google Sheetsから読み込み
+# スプレッドシートID: 14sqcUel8IOj2dl24pM_2Pg9-7ctI07RDpy0iUQdnPMA
+# シートID: 905102560
+SHEET_ID = "14sqcUel8IOj2dl24pM_2Pg9-7ctI07RDpy0iUQdnPMA"
+GID = "905102560"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
+
+try:
+    # Google SheetsからCSV形式でデータを読み込み
+    df_raw = pd.read_csv(SHEET_URL)
+    # CSVの「班」列を「回答者」として使用（「班」を付ける）
+    df = pd.DataFrame({
+        "回答者": [f"{ban}班" for ban in df_raw['班'].values],
+        "赤": df_raw['赤'].values,
+        "緑": df_raw['緑'].values,
+        "青": df_raw['青'].values,
+        "紫": df_raw['紫'].values,
+    })
+except Exception as e:
+    # 読み込みに失敗した場合はダミーデータ
+    st.warning(f"Google Sheetsからの読み込みに失敗しました: {e}")
+    assignments = [np.random.choice(drink_choices, size=4, replace=False) for _ in range(32)]
+    df = pd.DataFrame({
+        "回答者": [f'{i}班' for i in range(1, 33)],
+        "赤": [a[0] for a in assignments],
+        "緑": [a[1] for a in assignments],
+        "青": [a[2] for a in assignments],
+        "紫": [a[3] for a in assignments],
+    })
 
 # -----------------------
 # Pivotテーブル（ドリンク別・色表示）
@@ -188,11 +208,11 @@ with col2:
 
     sub1, sub2 = st.columns(2)
     with sub1:
-        st.altair_chart(make_chart_for_drink(df, 'ポカリスエット'), use_container_width=True)
-        st.altair_chart(make_chart_for_drink(df, 'グリーンダカラ'), use_container_width=True)
+        st.altair_chart(make_chart_for_drink(df, 'ポカリ'), use_container_width=True)
+        st.altair_chart(make_chart_for_drink(df, 'だから'), use_container_width=True)
     with sub2:
-        st.altair_chart(make_chart_for_drink(df, 'アクエリアス'), use_container_width=True)
-        st.altair_chart(make_chart_for_drink(df, 'ビタミンウォーター'), use_container_width=True)
+        st.altair_chart(make_chart_for_drink(df, 'アクエリ'), use_container_width=True)
+        st.altair_chart(make_chart_for_drink(df, '??'), use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 
