@@ -81,7 +81,7 @@ drink_colors = {
     'だから': "#76c893",
     '??': "#f6d743"
 }
-bg_map = {"赤": "#ff4b4b", "緑": "#4caf50", "青": "#1e90ff", "紫": "#9c27b0"}
+bg_map = {"ピンク": "#fc81ac", "ブルー": "#5ddaf0", "グリーン": "#72C045", "レッド": "#d92c06"}
 
 # Google Sheetsから読み込み
 # スプレッドシートID: 14sqcUel8IOj2dl24pM_2Pg9-7ctI07RDpy0iUQdnPMA
@@ -96,10 +96,10 @@ try:
     # CSVの「班」列を「回答者」として使用（「班」を付ける）
     df = pd.DataFrame({
         "回答者": [f"{ban}班" for ban in df_raw['班'].values],
-        "赤": df_raw['赤'].values,
-        "緑": df_raw['緑'].values,
-        "青": df_raw['青'].values,
-        "紫": df_raw['紫'].values,
+        "ピンク": df_raw['ピンク'].values,
+        "ブルー": df_raw['ブルー'].values,
+        "グリーン": df_raw['グリーン'].values,
+        "レッド": df_raw['レッド'].values,
     })
 except Exception as e:
     # 読み込みに失敗した場合はダミーデータ
@@ -107,10 +107,10 @@ except Exception as e:
     assignments = [np.random.choice(drink_choices, size=4, replace=False) for _ in range(32)]
     df = pd.DataFrame({
         "回答者": [f'{i}班' for i in range(1, 33)],
-        "赤": [a[0] for a in assignments],
-        "緑": [a[1] for a in assignments],
-        "青": [a[2] for a in assignments],
-        "紫": [a[3] for a in assignments],
+        "ピンク": [a[0] for a in assignments],
+        "ブルー": [a[1] for a in assignments],
+        "グリーン": [a[2] for a in assignments],
+        "レッド": [a[3] for a in assignments],
     })
 
 # -----------------------
@@ -121,7 +121,7 @@ for drink in drink_choices:
     color_list = []
     for i in range(len(df)):
         matched_colors = []
-        for color in ['赤', '緑', '青', '紫']:
+        for color in ['ピンク', 'ブルー', 'グリーン', 'レッド']:
             if df.loc[i, color] == drink:
                 matched_colors.append(color)
         color_list.append('・'.join(matched_colors) if matched_colors else '')
@@ -168,7 +168,7 @@ def render_compact_table(df, component_height=COMPONENT_HEIGHT):
 # 棒グラフ生成関数（ドリンクごとに1つ）
 # -----------------------
 def make_chart_for_drink(df, drink_name):
-    melted = df.melt(id_vars='回答者', value_vars=['赤','緑','青','紫'],
+    melted = df.melt(id_vars='回答者', value_vars=['ピンク','ブルー','グリーン','レッド'],
                      var_name='色', value_name='ドリンク')
     chart_data = melted[melted['ドリンク'] == drink_name]
     counts = chart_data['色'].value_counts().reset_index()
@@ -180,7 +180,7 @@ def make_chart_for_drink(df, drink_name):
         alt.Chart(counts)
         .mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5)
         .encode(
-            x=alt.X('色:N', sort=['赤','緑','青','紫'], title=None),
+            x=alt.X('色:N', sort=['ピンク','ブルー','グリーン','レッド'], title=None),
             y=alt.Y('票数:Q', scale=alt.Scale(domain=[0, max_votes * 1.25])),
             color=alt.Color('色:N',
                             scale=alt.Scale(domain=list(bg_map.keys()), range=list(bg_map.values())),
