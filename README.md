@@ -19,29 +19,6 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 ---
 
-### 2️⃣ プロジェクトの初期化（初回のみ）
-
-プロジェクトディレクトリで以下を実行：
-```bash
-uv init
-```
-
-これで `pyproject.toml` が自動生成されます。
-
----
-
-### 3️⃣ 依存関係のインストール
-
-**方法A: requirements.txt がある場合**
-```bash
-uv pip install -r requirements.txt
-```
-
-**方法B: requirements.txt がない場合**
-```bash
-uv add streamlit pandas numpy streamlit-autorefresh altair
-```
-
 ---
 
 ## 🧠 実行方法
