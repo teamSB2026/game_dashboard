@@ -59,7 +59,7 @@ body {{ background: #f0faff; }}
 """, unsafe_allow_html=True)
 
 # 🔄 自動リフレッシュ（デモ用）
-#st_autorefresh(interval=3 * 1000, key="refresh_demo")
+st_autorefresh(interval=3 * 1000, key="refresh_demo")
 
 # ヘッダー画像（任意）
 assets_dir = Path(__file__).resolve().parent / "assets"
@@ -74,20 +74,20 @@ st.markdown("<p class='sub-text'>💪 さあみんなどれがどれだかわか
 # -----------------------
 # CSVデータ読み込み
 # -----------------------
-drink_choices = ['ポカリ', 'アクエリ', 'だから', '??']
+drink_choices = ['ポカリ', 'アクエリ', 'だから', 'キリンラブスポーツ']
 drink_colors = {
     'ポカリ': "#4fa6ff",
     'アクエリ': "#0077cc",
     'だから': "#76c893",
-    '??': "#f6d743"
+    'キリンラブスポーツ': "#f6d743"
 }
 bg_map = {"ピンク": "#fc81ac", "ブルー": "#5ddaf0", "グリーン": "#72C045", "レッド": "#d92c06"}
 
 # Google Sheetsから読み込み
-# スプレッドシートID: 14sqcUel8IOj2dl24pM_2Pg9-7ctI07RDpy0iUQdnPMA
-# シートID: 905102560
-SHEET_ID = "14sqcUel8IOj2dl24pM_2Pg9-7ctI07RDpy0iUQdnPMA"
-GID = "905102560"
+# スプレッドシートID: 1OwPUg1eGwF41LlNaZ9RKpnBEL748Ui8vINBCPobzML8
+# シートID: 985675602
+SHEET_ID = "1OwPUg1eGwF41LlNaZ9RKpnBEL748Ui8vINBCPobzML8"
+GID = "985675602"
 SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
 try:
@@ -96,11 +96,17 @@ try:
     # CSVの「班」列を「回答者」として使用（「班」を付ける）
     df = pd.DataFrame({
         "回答者": [f"{ban}班" for ban in df_raw['班'].values],
-        "ピンク": df_raw['ピンク'].values,
-        "ブルー": df_raw['ブルー'].values,
-        "グリーン": df_raw['グリーン'].values,
-        "レッド": df_raw['レッド'].values,
+        "ピンク": df_raw['回答 [ピンク]'].values,
+        "ブルー": df_raw['回答 [ブルー]'].values,
+        "グリーン": df_raw['回答 [グリーン]'].values,
+        "レッド": df_raw['回答 [レッド]'].values,
     })
+    print(df)
+    # 重複した班がある場合は最新の回答を残す
+    df = df.drop_duplicates(subset=['回答者'], keep='last').reset_index(drop=True)
+    # 班番号でソート（数値順）
+    df = df.sort_values('回答者', key=lambda x: x.str.replace('班', '').astype(int)).reset_index(drop=True)
+    print(df)
 except Exception as e:
     # 読み込みに失敗した場合はダミーデータ
     st.warning(f"Google Sheetsからの読み込みに失敗しました: {e}")
@@ -212,7 +218,7 @@ with col2:
         st.altair_chart(make_chart_for_drink(df, 'だから'), use_container_width=True)
     with sub2:
         st.altair_chart(make_chart_for_drink(df, 'アクエリ'), use_container_width=True)
-        st.altair_chart(make_chart_for_drink(df, '??'), use_container_width=True)
+        st.altair_chart(make_chart_for_drink(df, 'キリンラブスポーツ'), use_container_width=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
 

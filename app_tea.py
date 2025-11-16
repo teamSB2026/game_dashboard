@@ -21,10 +21,10 @@ FIRST_COL_WIDTH_PX = 100
 # 🎨 共通 CSS
 st.markdown(f"""
 <style>
-body {{ background: #fdf6ff; }}
-.header-title {{ font-size:36px; font-weight:900; text-align:center; color:#7748c4; margin:10px 0 4px 0; font-family:"Trebuchet MS",sans-serif; text-shadow:1px 2px #ffc9e3; }}
+body {{ background: #f0faff; }}
+.header-title {{ font-size:36px; font-weight:900; text-align:center; color:#1e88e5; margin:10px 0 4px 0; font-family:"Trebuchet MS",sans-serif; text-shadow:1px 2px #b3e5fc; }}
 .sub-text {{ text-align:center; font-size:18px; margin-bottom:12px; color:#555; }}
-.tea-card {{ border-radius:12px; background:#ffffffcc; backdrop-filter: blur(6px); padding:12px; margin-top:14px; box-shadow:0 4px 10px rgba(255,196,232,0.25); }}
+.drink-card {{ border-radius:12px; background:#ffffffcc; backdrop-filter: blur(6px); padding:12px; margin-top:14px; box-shadow:0 4px 10px rgba(130,200,255,0.25); }}
 .compact-table {{
   border-collapse: collapse;
   width:100%;
@@ -54,7 +54,7 @@ body {{ background: #fdf6ff; }}
   vertical-align:middle;
   border-bottom:1px solid rgba(0,0,0,0.03);
 }}
-.compact-table tbody tr:hover {{ background: rgba(255,240,245,0.6); }}
+.compact-table tbody tr:hover {{ background: rgba(224,247,250,0.6); }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -66,33 +66,58 @@ assets_dir = Path(__file__).resolve().parent / "assets"
 header_path = assets_dir / "header.png"
 if header_path.exists():
     st.image(str(header_path), width="stretch")
+
 # タイトル
-st.markdown("<h1 class='header-title'>🍵 第２問 利きお茶 ☕️</h1>", unsafe_allow_html=True)
-st.markdown("<p class='sub-text'>🍡 さあみんな当たってるかな??? 🍡</p>", unsafe_allow_html=True)
+st.markdown("<h1 class='header-title'>🍵 第2問 利きお茶 🍃</h1>", unsafe_allow_html=True)
+st.markdown("<p class='sub-text'>🍵 さあみんなどれがどれだかわかったかな？ 🍃</p>", unsafe_allow_html=True)
 
 # -----------------------
-# サンプルデータ（4択重複なし）
+# CSVデータ読み込み
 # -----------------------
 tea_choices = ['おーいお茶', '綾鷹', '伊右衛門', '生茶']
 tea_colors = {
-    'おーいお茶': "#e97415",
-    '綾鷹': '#c4a484',
-    '伊右衛門': "#57f4dc",
-    '生茶': '#9acd32'
+    'おーいお茶': "#4fa6ff",
+    '綾鷹': "#0077cc",
+    '伊右衛門': "#76c893",
+    '生茶': "#f6d743"
 }
-bg_map = {"赤": "#ff4b4b", "緑": "#4caf50", "青": "#1e90ff", "紫": "#9c27b0"}
+bg_map = {"ピンク": "#fc81ac", "ブルー": "#5ddaf0", "グリーン": "#72C045", "レッド": "#d92c06"}
 
-assignments = [np.random.choice(tea_choices, size=4, replace=False) for _ in range(32)]
-data = {
-    "回答者": [f'{i}班' for i in range(1, 33)],
-    "赤": [a[0] for a in assignments],
-    "緑": [a[1] for a in assignments],
-    "青": [a[2] for a in assignments],
-    "紫": [a[3] for a in assignments],
-}
-df = pd.DataFrame(data)
+# Google Sheetsから読み込み
+# スプレッドシートID: 1dj5zS1cHlRlPx0FethqjAxhd-fmTWGE080HD6n9gdFA
+# シートID: 1647630838
+SHEET_ID = "1dj5zS1cHlRlPx0FethqjAxhd-fmTWGE080HD6n9gdFA"
+GID = "1647630838"
+SHEET_URL = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv&gid={GID}"
 
-print(df)
+try:
+    # Google SheetsからCSV形式でデータを読み込み
+    df_raw = pd.read_csv(SHEET_URL)
+    # CSVの「班」列を「回答者」として使用（「班」を付ける）
+    df = pd.DataFrame({
+        "回答者": [f"{ban}班" for ban in df_raw['班'].values],
+        "ピンク": df_raw['回答 [ピンク]'].values,
+        "ブルー": df_raw['回答 [ブルー]'].values,
+        "グリーン": df_raw['回答 [グリーン]'].values,
+        "レッド": df_raw['回答 [レッド]'].values,
+    })
+    print(df)
+    # 重複した班がある場合は最新の回答を残す
+    df = df.drop_duplicates(subset=['回答者'], keep='last').reset_index(drop=True)
+    # 班番号でソート（数値順）
+    df = df.sort_values('回答者', key=lambda x: x.str.replace('班', '').astype(int)).reset_index(drop=True)
+    print(df)
+except Exception as e:
+    # 読み込みに失敗した場合はダミーデータ
+    st.warning(f"Google Sheetsからの読み込みに失敗しました: {e}")
+    assignments = [np.random.choice(tea_choices, size=4, replace=False) for _ in range(32)]
+    df = pd.DataFrame({
+        "回答者": [f'{i}班' for i in range(1, 33)],
+        "ピンク": [a[0] for a in assignments],
+        "ブルー": [a[1] for a in assignments],
+        "グリーン": [a[2] for a in assignments],
+        "レッド": [a[3] for a in assignments],
+    })
 
 # -----------------------
 # Pivotテーブル（お茶別・色表示）
@@ -102,7 +127,7 @@ for tea in tea_choices:
     color_list = []
     for i in range(len(df)):
         matched_colors = []
-        for color in ['赤', '緑', '青', '紫']:
+        for color in ['ピンク', 'ブルー', 'グリーン', 'レッド']:
             if df.loc[i, color] == tea:
                 matched_colors.append(color)
         color_list.append('・'.join(matched_colors) if matched_colors else '')
@@ -149,7 +174,7 @@ def render_compact_table(df, component_height=COMPONENT_HEIGHT):
 # 棒グラフ生成関数（お茶ごとに1つ）
 # -----------------------
 def make_chart_for_tea(df, tea_name):
-    melted = df.melt(id_vars='回答者', value_vars=['赤','緑','青','紫'],
+    melted = df.melt(id_vars='回答者', value_vars=['ピンク','ブルー','グリーン','レッド'],
                      var_name='色', value_name='お茶')
     chart_data = melted[melted['お茶'] == tea_name]
     counts = chart_data['色'].value_counts().reset_index()
@@ -161,7 +186,7 @@ def make_chart_for_tea(df, tea_name):
         alt.Chart(counts)
         .mark_bar(cornerRadiusTopLeft=5, cornerRadiusTopRight=5)
         .encode(
-            x=alt.X('色:N', sort=['赤','緑','青','紫'], title=None),
+            x=alt.X('色:N', sort=['ピンク','ブルー','グリーン','レッド'], title=None),
             y=alt.Y('票数:Q', scale=alt.Scale(domain=[0, max_votes * 1.25])),
             color=alt.Color('色:N',
                             scale=alt.Scale(domain=list(bg_map.keys()), range=list(bg_map.values())),
@@ -178,13 +203,13 @@ def make_chart_for_tea(df, tea_name):
 col1, col2 = st.columns([1.2, 2.3])
 
 with col1:
-    st.markdown("<div class='tea-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='drink-card'>", unsafe_allow_html=True)
     st.write("🧾 集計結果")
     render_compact_table(df_pivot)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with col2:
-    st.markdown("<div class='tea-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='drink-card'>", unsafe_allow_html=True)
     st.write("🍵 利き集計結果（お茶ごと）")
 
     sub1, sub2 = st.columns(2)
@@ -201,4 +226,4 @@ with col2:
 # フッター
 # -----------------------
 st.success("🌟 デモのため3秒おきにページを自動更新します 🌟")
-st.markdown("<p style='text-align:center;color:#888;font-size:12px;'>© Bridge 2025 効きお茶ゲーム</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;color:#888;font-size:12px;'>© Bridge 2025 利きお茶ゲーム</p>", unsafe_allow_html=True)
